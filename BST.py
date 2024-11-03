@@ -25,8 +25,6 @@ class BST:
                 else:
                     self.add(current.right, val)
 
-
-
     def preorder(self, root):
         if root is None:
             return
@@ -34,44 +32,7 @@ class BST:
         self.preorder(root.left)
         self.preorder(root.right)
 
-    def inorder(self,root):
-        if root is None:
-            return
-        self.inorder(root.left)
-        print(root.val)
-        self.inorder(root.right)
-
-    def postorder(self, root):
-        if root is None:
-            return
-        self.postorder(root.left)
-        self.postorder(root.right)
-        print(root.val)
-# -- TEST CASES --
-
-# Creating BST instance
-tree = BST()
-
-# Adding nodes
-values = [10, 5, 15, 3, 7, 13, 18]
-for val in values:
-    tree.add(tree.root, val)
-# Expected BST structure:
-#          10
-#         /  \
-#        5    15
-#       / \   / \
-#      3   7 13  18
-
-
-# Testing preorder traversal
-tree.preorder(tree.root)  # Expected output order: 10, 5, 3, 7, 15, 13, 18
-
-# Testing preorder traversal
-tree.preorder(tree.root)  # Expected output order: 10, 5, 3, 7, 15, 13, 18
-
-
-
+    # Test comment
 
 
 
