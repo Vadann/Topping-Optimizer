@@ -35,7 +35,7 @@ class Topping:
     def getStats(self):
         return self.stats
 
-    def getBaseStats(self):
+    def getBaseStat(self):
         if self.type in Topping.baseToppings:
             return Topping.baseToppings[self.type]
 
@@ -48,7 +48,8 @@ class Topping:
         for attribute in attributes:
             for key, value in self.stats.items():
                 if key == attribute:
-                    print(f"Key {key} found with value {value}")
+                    return value
 
     def setStat(self, stats):
         self.stats = stats
+
