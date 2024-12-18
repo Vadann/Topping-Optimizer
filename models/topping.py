@@ -8,12 +8,9 @@ class Topping:
         "apple_jelly": 9
     }
 
-
-
     def __init__(self, stats=None):
         self.id = Topping.counter
         Topping.counter += 1
-        self.type = type
         if stats is None:
             self.stats = {}
         else:
@@ -22,7 +19,15 @@ class Topping:
         self.type = stats["type"]
 
     def __repr__(self):
-        return f"Topping(type={self.type}, ATK={self.stats["ATK"]}, Crit={self.stats["Crit"]}, ATK_SPD={self.stats["ATK_SPD"]})"
+        key_list = list(self.stats.keys())
+        stat_list = []
+
+        for key in key_list:
+            if key != "type":
+                stat_list.append(key)
+
+        return f"Topping: {self.type} {stat_list[0]}: {self.stats[stat_list[0]]} {stat_list[1]}: {self.stats[stat_list[1]]} {stat_list[2]}: {self.stats[stat_list[2]]} "
+
 
     def getType(self):
         return self.type
