@@ -2,19 +2,7 @@ from itertools import combinations
 import random
 import time
 
-print("Starting code... ")
-# Base and current values
-base_atk = 60  # 30 + 27 + 3
-base_atk_spd = 0
-base_cooldown = 6
-# Input your current stats here (base + toppings)
-current_atk = base_atk + 8.5  # Example - replace with your current value
-current_cooldown = base_cooldown + 3.6  # Example - replace with your current value
-current_dmg_resist = 27.9  # Example - replace with your current value
 
-# Define the requirement ranges
-cooldown_range = (14.3, 20.0)  # At least 14.3
-dmg_resist_range = (27.0, 30.0)  # Between 27-30
 
 # Load toppings from your toppings.txt file
 # ... (toppings data loading) ...
@@ -318,17 +306,26 @@ toppings = [
     {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.6, 'Cooldown': 1.1, 'DMG_Resist': 0.0},
     {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.6, 'Crit': 2.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.1}
+    {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.1},
+    {'type': 'raspberry', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.1},
+    {'type': 'chocolate', 'ATK': 2.4, 'ATK_SPD': 2.6, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.1},
+    {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.8, 'Cooldown': 2.0, 'DMG_Resist': 5.8},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 5.4},
+    
         
 
         ]
 print("Starting code... ")
 
 # Base values
+
 base_atk = 60  # 30 + 27 + 3
 base_cooldown = 11.7
 base_dmg_resist = 0
-
+# Input your current stats here (base + toppings)
+current_atk = base_atk + 8.5  # Example - replace with your current value
+current_cooldown = base_cooldown + 3.6  # Example - replace with your current value
+current_dmg_resist = 27.9  # Example - replace with your current value
 # Define requirement ranges
 cooldown_range = (14.3, 20.0)  # At least 14.3
 dmg_resist_range = (27, 30.0)  # Between 27-30
@@ -455,6 +452,7 @@ best_combo, max_atk = genetic_algorithm(toppings)
 end_time = time.time()
 
 # Output the result
+# Output the result
 if best_combo:
     total_atk = max_atk
     total_cooldown = sum(t['Cooldown'] for t in best_combo) + base_cooldown
@@ -462,6 +460,15 @@ if best_combo:
 
     print(f"\nTime taken: {end_time - start_time:.2f} seconds")
     
+    # Current stats (before)
+    print("\nCurrent Stats:")
+    print("-" * 50)
+    print(f"{'Current ATK:':<20}{current_atk:.2f}")
+    print(f"{'Current Cooldown:':<20}{current_cooldown:.2f}")
+    print(f"{'Current DMG_Resist:':<20}{current_dmg_resist:.2f}")
+    print("-" * 50)
+    
+    # Best combo found
     print("\nBest combo found:")
     print("-" * 50)
     print(f"{'Topping Type':<15}{'ATK':<10}{'Cooldown':<10}{'DMG_Resist':<10}")
@@ -471,9 +478,11 @@ if best_combo:
               f"{topping['DMG_Resist']:<10.1f}")
     print("-" * 50)
     
-    print(f"\nTotal Stats (Including Base):")
-    print(f"{'Total ATK:':<20}{total_atk:.2f}")
-    print(f"{'Total Cooldown:':<20}{total_cooldown:.2f}")
-    print(f"{'Total DMG_Resist:':<20}{total_dmg_resist:.2f}")
+    # Stats comparison
+    print(f"\nStats Comparison (Current -> New):")
+    print("-" * 50)
+    print(f"{'ATK:':<20}{current_atk:.2f} -> {total_atk:.2f} ({total_atk - current_atk:+.2f})")
+    print(f"{'Cooldown:':<20}{current_cooldown:.2f} -> {total_cooldown:.2f} ({total_cooldown - current_cooldown:+.2f})")
+    print(f"{'DMG_Resist:':<20}{current_dmg_resist:.2f} -> {total_dmg_resist:.2f} ({total_dmg_resist - current_dmg_resist:+.2f})")
 else:
     print("No valid combination found.")
