@@ -1,7 +1,7 @@
 from itertools import combinations
 import time
 
-def preprocess_toppings(toppings, min_relevant_stats=1):
+def preprocess_toppings(toppings, min_relevant_stats=2):
     """
     Filter toppings based on relevance to ATK_SPD and Cooldown.
     Only keep toppings that have at least min_relevant_stats of these stats.
@@ -38,7 +38,7 @@ def find_all_valid_combos(chocolate_toppings):
     base_cd = 15 + 5 + 11.3
     base_aspd = 0
     
-    min_aspd = 8
+    min_aspd = 11.5
     
     valid_combos = []
     combinations_checked = 0

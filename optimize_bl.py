@@ -43,7 +43,7 @@ def find_all_valid_combos(raspberry_toppings, chocolate_toppings):
     base_dmg_resist = 0
     
     dmg_resist_range = (27, 30)
-    cd_min = 14.3
+    cd_min = 14.5
     
     valid_combos = []
     combinations_checked = 0

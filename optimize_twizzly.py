@@ -41,19 +41,19 @@ def preprocess_toppings(toppings, min_relevant_stats=2):
 
 def find_all_valid_combos(jelly_toppings, chocolate_toppings, almond_toppings):
     """Find ALL valid combinations for both strategies."""
-    cd_range = (12.2, 13.7)
-    min_dmg_resist = 65
-    max_crit = 42  # Maximum useful crit
+    min_cd = 17.6
+    min_dmr = 62
+    min_crit = 11.8
     
-    # Strategy 1: 3 Jelly + 2 Chocolate
-    base_cd_1 = 6
-    base_crit_1 = 27
-    base_dmr_1 = 36.8
+    # Strategy 1: 3 Chocolate + 1 Jelly + 1 Almond
+    base_cd_1 = 9
+    base_crit_1 = 9
+    base_dmr_1 = 40.9
     
-    # Strategy 2: 3 Jelly + 1 Chocolate + 1 Almond
-    base_cd_2 = 3
-    base_crit_2 = 27
-    base_dmr_2 = 40.9
+    # Strategy 2: 4 Chocolate + 1 Jelly
+    base_cd_2 = 12
+    base_crit_2 = 9
+    base_dmr_2 = 36.8
     
     valid_combos = []
     combinations_checked = 0
@@ -63,56 +63,60 @@ def find_all_valid_combos(jelly_toppings, chocolate_toppings, almond_toppings):
     print(f"Chocolate toppings: {len(chocolate_toppings)}")
     print(f"Almond toppings: {len(almond_toppings)}")
     
-    # Strategy 1: 3 Jelly + 2 Chocolate
-    print("\nChecking Strategy 1: 3 Jelly + 2 Chocolate")
-    for jelly_combo in combinations(jelly_toppings, 3):
-        for choc_combo in combinations(chocolate_toppings, 2):
-            combinations_checked += 1
-            combo = list(jelly_combo) + list(choc_combo)
-            
-            total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
-            total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
-            total_dmr = base_dmr_1 + sum(t.get('DMG_Resist', 0) for t in combo)
-            
-            if (cd_range[0] <= total_cd <= cd_range[1] and 
-                total_dmr >= min_dmg_resist and 
-                total_crit <= max_crit):
-                valid_combos.append({
-                    'strategy': '3J2C',
-                    'combo': combo,
-                    'total_crit': total_crit,
-                    'total_cd': total_cd,
-                    'total_dmr': total_dmr
-                })
-    
-    # Strategy 2: 3 Jelly + 1 Chocolate + 1 Almond
-    print("\nChecking Strategy 2: 3 Jelly + 1 Chocolate + 1 Almond")
-    for jelly_combo in combinations(jelly_toppings, 3):
-        for choc_combo in combinations(chocolate_toppings, 1):
+    # Strategy 1: 3 Chocolate + 1 Jelly + 1 Almond
+    print("\nChecking Strategy 1: 3 Chocolate + 1 Jelly + 1 Almond")
+    for choc_combo in combinations(chocolate_toppings, 3):
+        for jelly_combo in combinations(jelly_toppings, 1):
             for almond_combo in combinations(almond_toppings, 1):
                 combinations_checked += 1
-                combo = list(jelly_combo) + list(choc_combo) + list(almond_combo)
+                combo = list(choc_combo) + list(jelly_combo) + list(almond_combo)
                 
-                total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
-                total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
-                total_dmr = base_dmr_2 + sum(t.get('DMG_Resist', 0) for t in combo)
+                total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
+                total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
+                total_dmr = base_dmr_1 + sum(t.get('DMG_Resist', 0) for t in combo)
+                total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
                 
-                if (cd_range[0] <= total_cd <= cd_range[1] and 
-                    total_dmr >= min_dmg_resist and 
-                    total_crit <= max_crit):
+                if (total_cd >= min_cd and 
+                    total_dmr >= min_dmr and 
+                    total_crit >= min_crit):
                     valid_combos.append({
-                        'strategy': '3J1C1A',
+                        'strategy': '3C1J1A',
                         'combo': combo,
                         'total_crit': total_crit,
                         'total_cd': total_cd,
-                        'total_dmr': total_dmr
+                        'total_dmr': total_dmr,
+                        'total_aspd': total_aspd
                     })
-                
-                if combinations_checked % 1000 == 0:
-                    print(f"Checked {combinations_checked} combinations...")
     
-    # Sort all valid combinations by Crit first, then by DMG_Resist
-    valid_combos.sort(key=lambda x: (x['total_crit'], x['total_dmr']), reverse=True)
+    # Strategy 2: 4 Chocolate + 1 Jelly
+    print("\nChecking Strategy 2: 4 Chocolate + 1 Jelly")
+    for choc_combo in combinations(chocolate_toppings, 4):
+        for jelly_combo in combinations(jelly_toppings, 1):
+            combinations_checked += 1
+            combo = list(choc_combo) + list(jelly_combo)
+            
+            total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
+            total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
+            total_dmr = base_dmr_2 + sum(t.get('DMG_Resist', 0) for t in combo)
+            total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
+            
+            if (total_cd >= min_cd and 
+                total_dmr >= min_dmr and 
+                total_crit >= min_crit):
+                valid_combos.append({
+                    'strategy': '4C1J',
+                    'combo': combo,
+                    'total_crit': total_crit,
+                    'total_cd': total_cd,
+                    'total_dmr': total_dmr,
+                    'total_aspd': total_aspd
+                })
+        
+        if combinations_checked % 1000 == 0:
+            print(f"Checked {combinations_checked} combinations...")
+    
+    # Sort by DMR first, then by Crit, then by CD
+    valid_combos.sort(key=lambda x: (x['total_dmr'], x['total_crit'], x['total_cd']), reverse=True)
     
     return valid_combos, combinations_checked
 
@@ -133,13 +137,14 @@ def print_detailed_results(valid_combos, combinations_checked, time_taken):
         combo = result['combo']
         print(f"\n{i}. {result['strategy']} Combination (Crit: {result['total_crit']:.1f}, "
               f"CD: {result['total_cd']:.1f}, "
-              f"DMG_Resist: {result['total_dmr']:.1f}):")
+              f"DMG_Resist: {result['total_dmr']:.1f}, "
+              f"ASPD: {result['total_aspd']:.1f}):")
         print("-" * 50)
-        print(f"{'Type':<12}{'Crit':<8}{'CD':<8}{'DMR':<8}")
+        print(f"{'Type':<12}{'Crit':<8}{'CD':<8}{'DMR':<8}{'ASPD':<8}")
         print("-" * 50)
         for topping in combo:
             print(f"{topping['type']:<12}{topping.get('Crit', 0):<8.1f}"
-                  f"{topping.get('Cooldown', 0):<8.1f}{topping.get('DMG_Resist', 0):<8.1f}")
+                  f"{topping.get('Cooldown', 0):<8.1f}{topping.get('DMG_Resist', 0):<8.1f}{topping.get('ATK_SPD', 0):<8.1f}")
 
 if __name__ == "__main__":
     # Your actual toppings list
