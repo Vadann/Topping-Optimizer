@@ -101,6 +101,7 @@ if __name__ == "__main__":
     # Your actual toppings list
     toppings = [
         {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.4},
+    {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 0.0},   
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 1.9},
     {'type': 'raspberry', 'ATK': 2.5, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
