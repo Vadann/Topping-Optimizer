@@ -37,25 +37,21 @@ def preprocess_toppings(toppings, min_relevant_stats=2):
     return filtered_toppings
 
 def find_all_valid_combos(jelly_toppings, chocolate_toppings):
-    """Find ALL valid combinations for all three strategies."""
-    min_cd = 33
-    min_aspd = 9.5
-    crit_range = (25, 28.0)
+    """Find ALL valid combinations for both strategies."""
+    target_cd = 34     # Exact CD target
+    cd_tolerance = 0.1   # Allow small deviation from target
+    max_crit = 27.0      # Maximum crit cap
+    min_aspd = 10.8      # Minimum ATK SPD requirement
     
-    # Strategy 1: 5 Jelly
-    base_cd_1 = 18.6
-    base_crit_1 = 45
-    base_atk_1 = 30  # Base ATK for all strategies is 0
+    # Strategy 1: 3 Jelly + 2 Chocolate
+    base_cd_1 = 24.6
+    base_crit_1 = 27
+    base_atk_1 = 0
     
-    # Strategy 2: 4 Jelly + 1 Chocolate
-    base_cd_2 = 21.6
-    base_crit_2 = 36
-    base_atk_2 = 30
-    
-    # Strategy 3: 3 Jelly + 2 Chocolate
-    base_cd_3 = 24.6
-    base_crit_3 = 27
-    base_atk_3 = 30
+    # Strategy 2: 2 Jelly + 3 Chocolate
+    base_cd_2 = 27.6
+    base_crit_2 = 18
+    base_atk_2 = 0
     
     valid_combos = []
     combinations_checked = 0
@@ -64,68 +60,21 @@ def find_all_valid_combos(jelly_toppings, chocolate_toppings):
     print(f"Apple Jelly toppings: {len(jelly_toppings)}")
     print(f"Chocolate toppings: {len(chocolate_toppings)}")
     
-    # Strategy 1: 5 Jelly
-    print("\nChecking Strategy 1: 5 Jelly")
-    for jelly_combo in combinations(jelly_toppings, 5):
-        combinations_checked += 1
-        combo = list(jelly_combo)
-        
-        total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
-        total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
-        total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
-        total_atk = base_atk_1 + sum(t.get('ATK', 0) for t in combo)
-        
-        if (total_cd >= min_cd and 
-            total_aspd >= min_aspd and 
-            crit_range[0] <= total_crit <= crit_range[1]):
-            valid_combos.append({
-                'strategy': '5J',
-                'combo': combo,
-                'total_crit': total_crit,
-                'total_cd': total_cd,
-                'total_aspd': total_aspd,
-                'total_atk': total_atk
-            })
-    
-    # Strategy 2: 4 Jelly + 1 Chocolate
-    print("\nChecking Strategy 2: 4 Jelly + 1 Chocolate")
-    for jelly_combo in combinations(jelly_toppings, 4):
-        for choc_combo in combinations(chocolate_toppings, 1):
-            combinations_checked += 1
-            combo = list(jelly_combo) + list(choc_combo)
-            
-            total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
-            total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
-            total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
-            total_atk = base_atk_2 + sum(t.get('ATK', 0) for t in combo)
-            
-            if (total_cd >= min_cd and 
-                total_aspd >= min_aspd and 
-                crit_range[0] <= total_crit <= crit_range[1]):
-                valid_combos.append({
-                    'strategy': '4J1C',
-                    'combo': combo,
-                    'total_crit': total_crit,
-                    'total_cd': total_cd,
-                    'total_aspd': total_aspd,
-                    'total_atk': total_atk
-                })
-    
-    # Strategy 3: 3 Jelly + 2 Chocolate
-    print("\nChecking Strategy 3: 3 Jelly + 2 Chocolate")
+    # Strategy 1: 3 Jelly + 2 Chocolate
+    print("\nChecking Strategy 1: 3 Jelly + 2 Chocolate")
     for jelly_combo in combinations(jelly_toppings, 3):
         for choc_combo in combinations(chocolate_toppings, 2):
             combinations_checked += 1
             combo = list(jelly_combo) + list(choc_combo)
             
-            total_crit = base_crit_3 + sum(t.get('Crit', 0) for t in combo)
-            total_cd = base_cd_3 + sum(t.get('Cooldown', 0) for t in combo)
+            total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
+            total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
             total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
-            total_atk = base_atk_3 + sum(t.get('ATK', 0) for t in combo)
+            total_atk = base_atk_1 + sum(t.get('ATK', 0) for t in combo)
             
-            if (total_cd >= min_cd and 
-                total_aspd >= min_aspd and 
-                crit_range[0] <= total_crit <= crit_range[1]):
+            if (target_cd - cd_tolerance <= total_cd <= target_cd + cd_tolerance and 
+                total_crit <= max_crit and 
+                total_aspd >= min_aspd):
                 valid_combos.append({
                     'strategy': '3J2C',
                     'combo': combo,
@@ -135,8 +84,35 @@ def find_all_valid_combos(jelly_toppings, chocolate_toppings):
                     'total_atk': total_atk
                 })
     
-    # Sort by crit first (within range), then by ATK
-    valid_combos.sort(key=lambda x: (x['total_crit'], x['total_atk']), reverse=True)
+    # Strategy 2: 2 Jelly + 3 Chocolate
+    print("\nChecking Strategy 2: 2 Jelly + 3 Chocolate")
+    for jelly_combo in combinations(jelly_toppings, 2):
+        for choc_combo in combinations(chocolate_toppings, 3):
+            combinations_checked += 1
+            combo = list(jelly_combo) + list(choc_combo)
+            
+            total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
+            total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
+            total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
+            total_atk = base_atk_2 + sum(t.get('ATK', 0) for t in combo)
+            
+            if (target_cd - cd_tolerance <= total_cd <= target_cd + cd_tolerance and 
+                total_crit <= max_crit and 
+                total_aspd >= min_aspd):
+                valid_combos.append({
+                    'strategy': '2J3C',
+                    'combo': combo,
+                    'total_crit': total_crit,
+                    'total_cd': total_cd,
+                    'total_aspd': total_aspd,
+                    'total_atk': total_atk
+                })
+        
+        if combinations_checked % 1000 == 0:
+            print(f"Checked {combinations_checked} combinations...")
+    
+    # Sort by ATK (highest first)
+    valid_combos.sort(key=lambda x: x['total_atk'], reverse=True)
     
     return valid_combos, combinations_checked
 
@@ -155,23 +131,27 @@ def print_detailed_results(valid_combos, combinations_checked, time_taken):
     
     for i, result in enumerate(valid_combos[:5], 1):
         combo = result['combo']
-        print(f"\n{i}. {result['strategy']} Combination (Crit: {result['total_crit']:.1f}, "
+        print(f"\n{i}. {result['strategy']} Combination (ATK: {result['total_atk']:.1f}, "
               f"CD: {result['total_cd']:.1f}, "
-              f"ASPD: {result['total_aspd']:.1f}, "
-              f"ATK: {result['total_atk']:.1f}):")
+              f"Crit: {result['total_crit']:.1f}, "
+              f"ASPD: {result['total_aspd']:.1f}):")
         print("-" * 60)
-        print(f"{'Type':<12}{'Crit':<8}{'CD':<8}{'ASPD':<8}{'ATK':<8}")
+        print(f"{'Type':<12}{'ATK':<8}{'CD':<8}{'Crit':<8}{'ASPD':<8}")
         print("-" * 60)
         for topping in combo:
-            print(f"{topping['type']:<12}{topping.get('Crit', 0):<8.1f}"
+            print(f"{topping['type']:<12}{topping.get('ATK', 0):<8.1f}"
                   f"{topping.get('Cooldown', 0):<8.1f}"
-                  f"{topping.get('ATK_SPD', 0):<8.1f}"
-                  f"{topping.get('ATK', 0):<8.1f}")
+                  f"{topping.get('Crit', 0):<8.1f}"
+                  f"{topping.get('ATK_SPD', 0):<8.1f}")
 
 if __name__ == "__main__":
     # Your actual toppings list
     toppings = [
-        {'type': 'apple_jelly', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 2.5, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 2.5, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 1.7, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.5},
+    {'type': 'apple_jelly', 'ATK': 2.1, 'ATK_SPD': 2.9, 'Crit': 1.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 1.7, 'ATK_SPD': 2.5, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 2.0, 'ATK_SPD': 3.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.1},
     {'type': 'apple_jelly', 'ATK': 2.2, 'ATK_SPD': 0.0, 'Crit': 2.8, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'apple_jelly', 'ATK': 2.2, 'ATK_SPD': 1.5, 'Crit': 2.5, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'apple_jelly', 'ATK': 2.2, 'ATK_SPD': 1.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
@@ -285,7 +265,8 @@ if __name__ == "__main__":
     {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.5},
     {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 2.2, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.4},
     {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 2.3, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'chocolate', 'ATK': 3.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 1.0},
+        {'type': 'chocolate', 'ATK': 3.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 1.0},
+        {'type': 'chocolate', 'ATK': 2.1, 'ATK_SPD': 0.0, 'Crit': 1.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 2.6, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 1.5, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 2.2, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 2.1, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
@@ -451,7 +432,8 @@ if __name__ == "__main__":
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.6, 'Cooldown': 1.1, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.6, 'Crit': 2.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-        {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.1}
+        {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.1},
+        {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.3, 'Cooldown': 1.6, 'DMG_Resist': 0.0}
     ]
     
     start_time = time.time()

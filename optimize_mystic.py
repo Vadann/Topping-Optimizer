@@ -41,11 +41,11 @@ def find_all_valid_combos(jelly_toppings, chocolate_toppings):
     min_cd = 35.0  # Strict CD requirement
     
     # Strategy 1: 5 Chocolate
-    base_cd_1 = 15
+    base_cd_1 = 29.5
     base_crit_1 = 0
     
     # Strategy 2: 4 Chocolate + 1 Jelly
-    base_cd_2 = 12
+    base_cd_2 = 26.5
     base_crit_2 = 9
     
     valid_combos = []

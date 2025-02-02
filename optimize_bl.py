@@ -41,9 +41,12 @@ def find_all_valid_combos(raspberry_toppings, chocolate_toppings):
     base_atk = 60  # 30 + 27 + 3
     base_cd = 11.7
     base_dmg_resist = 0
+    base_aspd = 0  # Base ASPD
     
     dmg_resist_range = (27, 30)
     cd_min = 14.5
+    target_aspd = 6.9  # Target ASPD
+    aspd_tolerance = 0.05  # Small tolerance for floating point comparison
     
     valid_combos = []
     combinations_checked = 0
@@ -62,15 +65,18 @@ def find_all_valid_combos(raspberry_toppings, chocolate_toppings):
             total_atk = base_atk + sum(t['ATK'] for t in combo)
             total_cd = base_cd + sum(t.get('Cooldown', 0) for t in combo)
             total_dmg_resist = base_dmg_resist + sum(t.get('DMG_Resist', 0) for t in combo)
+            total_aspd = base_aspd + sum(t.get('ATK_SPD', 0) for t in combo)
             
             # Store all valid combinations
             if (dmg_resist_range[0] <= total_dmg_resist <= dmg_resist_range[1] and 
-                total_cd >= cd_min):
+                total_cd >= cd_min and
+                abs(total_aspd - target_aspd) <= aspd_tolerance):
                 valid_combos.append({
                     'combo': combo,
                     'total_atk': total_atk,
                     'total_cd': total_cd,
-                    'total_dmg_resist': total_dmg_resist
+                    'total_dmg_resist': total_dmg_resist,
+                    'total_aspd': total_aspd
                 })
             
             if combinations_checked % 1000 == 0:
@@ -98,13 +104,15 @@ def print_detailed_results(valid_combos, combinations_checked, time_taken):
         combo = result['combo']
         print(f"\n{i}. Combination (ATK: {result['total_atk']:.1f}, "
               f"CD: {result['total_cd']:.1f}, "
-              f"DMG_Resist: {result['total_dmg_resist']:.1f}):")
-        print("-" * 50)
-        print(f"{'Type':<12}{'ATK':<8}{'CD':<8}{'DMG_Resist':<10}")
-        print("-" * 50)
+              f"DMG_Resist: {result['total_dmg_resist']:.1f}, "
+              f"ASPD: {result['total_aspd']:.1f}):")
+        print("-" * 60)
+        print(f"{'Type':<12}{'ATK':<8}{'CD':<8}{'DMG_Resist':<10}{'ASPD':<8}")
+        print("-" * 60)
         for topping in combo:
             print(f"{topping['type']:<12}{topping.get('ATK', 0):<8.1f}"
-                  f"{topping.get('Cooldown', 0):<8.1f}{topping.get('DMG_Resist', 0):<10.1f}")
+                  f"{topping.get('Cooldown', 0):<8.1f}{topping.get('DMG_Resist', 0):<10.1f}"
+                  f"{topping.get('ATK_SPD', 0):<8.1f}")
 
 def test_preprocess():
     """Test the preprocessing function with detailed output."""
@@ -145,6 +153,7 @@ if __name__ == "__main__":
     # Your actual toppings list
     toppings = [
         {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.4},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 1.9},
     {'type': 'raspberry', 'ATK': 2.5, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 1.7},
@@ -275,7 +284,13 @@ if __name__ == "__main__":
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 2.8, 'ATK_SPD': 2.5, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 2.7},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.3, 'Crit': 1.8, 'Cooldown': 0.0, 'DMG_Resist': 3.7},
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.2, 'Crit': 2.9, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 1.8},
+    {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 0.0, 'Crit': 2.2, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 1.5, 'ATK_SPD': 0.0, 'Crit': 2.4, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'chocolate', 'ATK': 3.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 1.0},
     {'type': 'chocolate', 'ATK': 2.2, 'ATK_SPD': 0.0, 'Crit': 1.2, 'Cooldown': 0.0, 'DMG_Resist': 5.6},
         {'type': 'chocolate', 'ATK': 2.6, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 1.5, 'DMG_Resist': 0.0},

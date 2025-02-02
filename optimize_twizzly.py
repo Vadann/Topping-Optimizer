@@ -3,10 +3,10 @@ import time
 
 def preprocess_toppings(toppings, min_relevant_stats=2):
     """
-    Filter toppings based on relevance to Crit, Cooldown, and DMG_Resist.
+    Filter toppings based on relevance to Crit, ATK_SPD, and DMG_Resist.
     Only keep toppings that have at least min_relevant_stats of these stats.
     """
-    relevant_stats = ['Crit', 'Cooldown', 'DMG_Resist']
+    relevant_stats = ['Crit', 'ATK_SPD', 'DMG_Resist']
     filtered_toppings = []
     discarded_toppings = []
     
@@ -26,130 +26,182 @@ def preprocess_toppings(toppings, min_relevant_stats=2):
     # Print summary by type
     jelly_kept = len([t for t in filtered_toppings if t['type'] == 'apple_jelly'])
     choc_kept = len([t for t in filtered_toppings if t['type'] == 'chocolate'])
-    almond_kept = len([t for t in filtered_toppings if t['type'] == 'almond'])
+    caramel_kept = len([t for t in filtered_toppings if t['type'] == 'caramel'])
     jelly_total = len([t for t in toppings if t['type'] == 'apple_jelly'])
     choc_total = len([t for t in toppings if t['type'] == 'chocolate'])
-    almond_total = len([t for t in toppings if t['type'] == 'almond'])
+    caramel_total = len([t for t in toppings if t['type'] == 'caramel'])
     
     print(f"\nDiscarded {len(discarded_toppings)} toppings with fewer than {min_relevant_stats} relevant stats")
     print(f"Apple Jelly toppings kept: {jelly_kept}/{jelly_total}")
     print(f"Chocolate toppings kept: {choc_kept}/{choc_total}")
-    print(f"Almond toppings kept: {almond_kept}/{almond_total}")
+    print(f"Caramel toppings kept: {caramel_kept}/{caramel_total}")
     print(f"Total toppings kept: {len(filtered_toppings)}/{len(toppings)}")
     
     return filtered_toppings
 
-def find_all_valid_combos(jelly_toppings, chocolate_toppings, almond_toppings):
-    """Find ALL valid combinations for both strategies."""
-    min_cd = 17.6
-    min_dmr = 62
-    min_crit = 11.8
+def find_all_valid_combos(jelly_toppings, chocolate_toppings, caramel_toppings):
+    """Find ALL valid combinations and track closest matches."""
+    base_cd = 6
+    base_dmr = 36.8
+    base_aspd = 8.2
+    base_crit = 0
     
-    # Strategy 1: 3 Chocolate + 1 Jelly + 1 Almond
-    base_cd_1 = 9
-    base_crit_1 = 9
-    base_dmr_1 = 40.9
-    
-    # Strategy 2: 4 Chocolate + 1 Jelly
-    base_cd_2 = 12
-    base_crit_2 = 9
-    base_dmr_2 = 36.8
+    min_aspd = 10
+    min_dmr = 60
+    crit_range = (17, 20)
     
     valid_combos = []
+    close_combos = []  # Track almost-valid combinations
     combinations_checked = 0
     
     print(f"\nChecking all combinations of:")
     print(f"Apple Jelly toppings: {len(jelly_toppings)}")
     print(f"Chocolate toppings: {len(chocolate_toppings)}")
-    print(f"Almond toppings: {len(almond_toppings)}")
+    print(f"Caramel toppings: {len(caramel_toppings)}")
     
-    # Strategy 1: 3 Chocolate + 1 Jelly + 1 Almond
-    print("\nChecking Strategy 1: 3 Chocolate + 1 Jelly + 1 Almond")
-    for choc_combo in combinations(chocolate_toppings, 3):
-        for jelly_combo in combinations(jelly_toppings, 1):
-            for almond_combo in combinations(almond_toppings, 1):
+    # Strategy: 2 Caramel + 2 Chocolate + 1 Jelly
+    print("\nChecking Strategy: 2 Caramel + 2 Chocolate + 1 Jelly")
+    for caramel_combo in combinations(caramel_toppings, 2):
+        for choc_combo in combinations(chocolate_toppings, 2):
+            for jelly_combo in combinations(jelly_toppings, 1):
                 combinations_checked += 1
-                combo = list(choc_combo) + list(jelly_combo) + list(almond_combo)
+                combo = list(caramel_combo) + list(choc_combo) + list(jelly_combo)
                 
-                total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
-                total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
-                total_dmr = base_dmr_1 + sum(t.get('DMG_Resist', 0) for t in combo)
-                total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
+                total_crit = base_crit + sum(t.get('Crit', 0) for t in combo)
+                total_cd = base_cd + sum(t.get('Cooldown', 0) for t in combo)
+                total_dmr = base_dmr + sum(t.get('DMG_Resist', 0) for t in combo)
+                total_aspd = base_aspd + sum(t.get('ATK_SPD', 0) for t in combo)
                 
-                if (total_cd >= min_cd and 
-                    total_dmr >= min_dmr and 
-                    total_crit >= min_crit):
-                    valid_combos.append({
-                        'strategy': '3C1J1A',
-                        'combo': combo,
-                        'total_crit': total_crit,
-                        'total_cd': total_cd,
-                        'total_dmr': total_dmr,
-                        'total_aspd': total_aspd
-                    })
-    
-    # Strategy 2: 4 Chocolate + 1 Jelly
-    print("\nChecking Strategy 2: 4 Chocolate + 1 Jelly")
-    for choc_combo in combinations(chocolate_toppings, 4):
-        for jelly_combo in combinations(jelly_toppings, 1):
-            combinations_checked += 1
-            combo = list(choc_combo) + list(jelly_combo)
-            
-            total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
-            total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
-            total_dmr = base_dmr_2 + sum(t.get('DMG_Resist', 0) for t in combo)
-            total_aspd = sum(t.get('ATK_SPD', 0) for t in combo)
-            
-            if (total_cd >= min_cd and 
-                total_dmr >= min_dmr and 
-                total_crit >= min_crit):
-                valid_combos.append({
-                    'strategy': '4C1J',
+                result = {
+                    'strategy': '2CA2C1J',
                     'combo': combo,
                     'total_crit': total_crit,
                     'total_cd': total_cd,
                     'total_dmr': total_dmr,
-                    'total_aspd': total_aspd
-                })
-        
-        if combinations_checked % 1000 == 0:
-            print(f"Checked {combinations_checked} combinations...")
+                    'total_aspd': total_aspd,
+                    'missing': []  # Track which requirements weren't met
+                }
+                
+                # Check each requirement and track misses
+                if total_aspd < min_aspd:
+                    result['missing'].append(f'ASPD: {total_aspd:.1f}/{min_aspd}')
+                if total_dmr < min_dmr:
+                    result['missing'].append(f'DMR: {total_dmr:.1f}/{min_dmr}')
+                if not (crit_range[0] <= total_crit <= crit_range[1]):
+                    result['missing'].append(f'Crit: {total_crit:.1f}/{crit_range[0]}-{crit_range[1]}')
+                
+                if not result['missing']:  # All requirements met
+                    valid_combos.append(result)
+                else:  # Track close combinations
+                    close_combos.append(result)
+                
+                if combinations_checked % 1000 == 0:
+                    print(f"Checked {combinations_checked} combinations...")
     
-    # Sort by DMR first, then by Crit, then by CD
-    valid_combos.sort(key=lambda x: (x['total_dmr'], x['total_crit'], x['total_cd']), reverse=True)
+    # Sort valid combinations
+    valid_combos.sort(key=lambda x: (x['total_aspd'], x['total_crit'], x['total_dmr']), reverse=True)
     
-    return valid_combos, combinations_checked
+    # If no valid combos, sort close combinations by how many requirements they missed
+    if not valid_combos and close_combos:
+        close_combos.sort(key=lambda x: (len(x['missing']), 
+                                       abs(x['total_aspd'] - min_aspd),
+                                       abs(x['total_dmr'] - min_dmr),
+                                       abs(x['total_crit'] - sum(crit_range)/2)))
+    
+    return valid_combos, close_combos, combinations_checked
 
-def print_detailed_results(valid_combos, combinations_checked, time_taken):
-    """Print detailed analysis of all valid combinations."""
-    if not valid_combos:
-        print("No valid combinations found!")
-        return
-        
+def print_detailed_results(valid_combos, close_combos, combinations_checked, time_taken):
+    """Print detailed analysis of all combinations."""
     print(f"\nSearch completed in {time_taken:.2f} seconds")
     print(f"Total combinations checked: {combinations_checked}")
     print(f"Valid combinations found: {len(valid_combos)}")
     
-    print("\nTop 5 Combinations:")
-    print("=" * 80)
-    
-    for i, result in enumerate(valid_combos[:5], 1):
-        combo = result['combo']
-        print(f"\n{i}. {result['strategy']} Combination (Crit: {result['total_crit']:.1f}, "
-              f"CD: {result['total_cd']:.1f}, "
-              f"DMG_Resist: {result['total_dmr']:.1f}, "
-              f"ASPD: {result['total_aspd']:.1f}):")
-        print("-" * 50)
-        print(f"{'Type':<12}{'Crit':<8}{'CD':<8}{'DMR':<8}{'ASPD':<8}")
-        print("-" * 50)
-        for topping in combo:
-            print(f"{topping['type']:<12}{topping.get('Crit', 0):<8.1f}"
-                  f"{topping.get('Cooldown', 0):<8.1f}{topping.get('DMG_Resist', 0):<8.1f}{topping.get('ATK_SPD', 0):<8.1f}")
+    if valid_combos:
+        print("\nTop 5 Valid Combinations:")
+        print("=" * 80)
+        for i, result in enumerate(valid_combos[:5], 1):
+            print_combo(i, result)
+    else:
+        print("\nNo valid combinations found. Showing closest matches:")
+        print("=" * 80)
+        for i, result in enumerate(close_combos[:5], 1):
+            print_combo(i, result)
+            print(f"Missing requirements: {', '.join(result['missing'])}")
+
+def print_combo(index, result):
+    """Helper function to print a single combination."""
+    combo = result['combo']
+    print(f"\n{index}. Combination (ASPD: {result['total_aspd']:.1f}, "
+          f"Crit: {result['total_crit']:.1f}, "
+          f"CD: {result['total_cd']:.1f}, "
+          f"DMG_Resist: {result['total_dmr']:.1f}):")
+    print("-" * 50)
+    print(f"{'Type':<12}{'ASPD':<8}{'Crit':<8}{'CD':<8}{'DMG_Resist':<10}")
+    print("-" * 50)
+    for topping in combo:
+        print(f"{topping['type']:<12}{topping.get('ATK_SPD', 0):<8.1f}"
+              f"{topping.get('Crit', 0):<8.1f}{topping.get('Cooldown', 0):<8.1f}"
+              f"{topping.get('DMG_Resist', 0):<10.1f}")
 
 if __name__ == "__main__":
     # Your actual toppings list
     toppings = [
-        {'type': 'chocolate', 'ATK': 3.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 1.0},
+        {'type': 'caramel', 'ATK': 2.0, 'ATK_SPD': 2.9, 'Crit': 2.4, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.8, 'Cooldown': 1.9, 'DMG_Resist': 4.0},
+    {'type': 'caramel', 'ATK': 1.8, 'ATK_SPD': 0.0, 'Crit': 2.8, 'Cooldown': 1.4, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.2, 'ATK_SPD': 0.0, 'Crit': 2.7, 'Cooldown': 0.0, 'DMG_Resist': 4.3},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 4.2},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.7, 'Cooldown': 2.0, 'DMG_Resist': 4.1},
+    {'type': 'caramel', 'ATK': 1.9, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.5},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.4},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.6, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.9, 'ATK_SPD': 2.6, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.6, 'Crit': 2.1, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 2.6, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 2.6, 'ATK_SPD': 2.3, 'Crit': 1.4, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.1, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 2.5, 'ATK_SPD': 2.1, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 1.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 1.6, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 2.2},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 3.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.2, 'ATK_SPD': 0.0, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 1.2},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 1.1, 'Crit': 0.0, 'Cooldown': 1.7, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.7, 'DMG_Resist': 3.3},
+    {'type': 'caramel', 'ATK': 2.7, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.2, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.1, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 1.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.2, 'ATK_SPD': 0.0, 'Crit': 1.2, 'Cooldown': 0.0, 'DMG_Resist': 5.9},
+    {'type': 'caramel', 'ATK': 2.1, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.5},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.1, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.3},
+    {'type': 'caramel', 'ATK': 1.1, 'ATK_SPD': 0.0, 'Crit': 2.1, 'Cooldown': 0.0, 'DMG_Resist': 5.2},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 5.2},
+    {'type': 'caramel', 'ATK': 1.5, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 2.6, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.5, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 2.3},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.2, 'ATK_SPD': 2.3, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.9},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 1.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.1},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 1.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 2.3},
+    {'type': 'caramel', 'ATK': 2.1, 'ATK_SPD': 0.0, 'Crit': 2.4, 'Cooldown': 2.0, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 1.1, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.5, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 1.5, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 1.7, 'DMG_Resist': 1.4},
+    {'type': 'caramel', 'ATK': 2.7, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.5, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.5, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.3},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 1.7, 'Cooldown': 1.2, 'DMG_Resist': 0.0},
+    {'type': 'caramel', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.9, 'Cooldown': 1.3, 'DMG_Resist': 0.0},
+    {'type': 'chocolate', 'ATK': 3.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 1.0},
+        {'type': 'chocolate', 'ATK': 2.1, 'ATK_SPD': 0.0, 'Crit': 1.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 2.6, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 1.5, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 2.2, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 2.1, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
@@ -316,7 +368,12 @@ if __name__ == "__main__":
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.6, 'Crit': 2.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.1},
+        {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.3, 'Cooldown': 1.6, 'DMG_Resist': 0.0},
         {'type': 'apple_jelly', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 2.5, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 1.7, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.5},
+    {'type': 'apple_jelly', 'ATK': 2.1, 'ATK_SPD': 2.9, 'Crit': 1.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 1.7, 'ATK_SPD': 2.5, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 2.0, 'ATK_SPD': 3.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.1},
     {'type': 'apple_jelly', 'ATK': 2.2, 'ATK_SPD': 0.0, 'Crit': 2.8, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'apple_jelly', 'ATK': 2.2, 'ATK_SPD': 1.5, 'Crit': 2.5, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'apple_jelly', 'ATK': 2.2, 'ATK_SPD': 1.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
@@ -429,40 +486,8 @@ if __name__ == "__main__":
     {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.6},
     {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.5},
     {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 2.2, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.4},
-    {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 2.3, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 2.8, 'ATK_SPD': 0.0, 'Crit': 1.1, 'Cooldown': 0.0, 'DMG_Resist': 6.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 6.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 2.0, 'DMG_Resist': 6.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 2.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 2.6, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 2.1},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 1.6, 'ATK_SPD': 3.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.6},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 1.3, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 1.2, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 1.8, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 2.5},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 2.3},
-    {'type': 'almond', 'ATK': 2.6, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.7, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 1.7, 'DMG_Resist': 4.5},
-    {'type': 'almond', 'ATK': 2.4, 'ATK_SPD': 1.2, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 1.2, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.5, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.2, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.1, 'DMG_Resist': 3.2},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 1.7, 'Cooldown': 1.3, 'DMG_Resist': 5.9},
-    {'type': 'almond', 'ATK': 1.2, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 2.7, 'Cooldown': 0.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 1.5, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.1, 'Cooldown': 0.0, 'DMG_Resist': 5.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.8},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 1.7, 'Cooldown': 0.0, 'DMG_Resist': 4.2},
-    {'type': 'almond', 'ATK': 2.1, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 3.3},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 2.7},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.6},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
-    {'type': 'almond', 'ATK': 0.0, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 0.0, 'ATK_SPD': 2.3, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0}
+
 
     ]
     
@@ -470,13 +495,13 @@ if __name__ == "__main__":
     filtered_toppings = preprocess_toppings(toppings)
     
     # Find all valid combinations
-    valid_combos, combinations_checked = find_all_valid_combos(
+    valid_combos, close_combos, combinations_checked = find_all_valid_combos(
         [t for t in filtered_toppings if t['type'] == 'apple_jelly'],
         [t for t in filtered_toppings if t['type'] == 'chocolate'],
-        [t for t in filtered_toppings if t['type'] == 'almond']
+        [t for t in filtered_toppings if t['type'] == 'caramel']
     )
     
     end_time = time.time()
     
     # Print detailed results
-    print_detailed_results(valid_combos, combinations_checked, end_time - start_time) 
+    print_detailed_results(valid_combos, close_combos, combinations_checked, end_time - start_time) 
