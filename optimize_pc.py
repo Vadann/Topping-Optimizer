@@ -6,18 +6,22 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
     # Strategy 1: 5 Caramel
     base_aspd_1 = 54.9
     base_cd_1 = 0
+    base_crit_1 = 0
     
     # Strategy 2: 5 Caramel + 1 Chocolate
     base_aspd_2 = 48.8
     base_cd_2 = 3
+    base_crit_2 = 0
     
     # Strategy 3: 3 Caramel + 2 Chocolate
     base_aspd_3 = 44.7
     base_cd_3 = 6
+    base_crit_3 = 0
     
-    aspd_range = (57.6, 57.6)
-    target_cd = 13.5
-    cd_tolerance = 0.05  # Small tolerance for floating point comparison
+    target_aspd = 57.6
+    target_cd = 9.4
+    aspd_tolerance = 0.05  # Small tolerance for floating point comparison
+    cd_tolerance = 0.05    # Small tolerance for CD
     
     valid_combos = []
     close_combos = []
@@ -35,21 +39,21 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
         
         total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
         total_aspd = base_aspd_1 + sum(t.get('ATK_SPD', 0) for t in combo)
+        total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
         
         result = {
             'strategy': '5CA',
             'combo': combo,
             'total_cd': total_cd,
             'total_aspd': total_aspd,
+            'total_crit': total_crit,
             'missing': []
         }
         
-        if total_aspd < aspd_range[0]:
-            result['missing'].append(f'ASPD too low: {total_aspd:.1f}/{aspd_range[0]}')
-        elif total_aspd > aspd_range[1]:
-            result['missing'].append(f'ASPD too high: {total_aspd:.1f}/{aspd_range[1]}')
+        if abs(total_aspd - target_aspd) > aspd_tolerance:
+            result['missing'].append(f'ASPD not {target_aspd}: {total_aspd:.1f}')
         if abs(total_cd - target_cd) > cd_tolerance:
-            result['missing'].append(f'CD not 15.3: {total_cd:.1f}')
+            result['missing'].append(f'CD not {target_cd}: {total_cd:.1f}')
         
         if not result['missing']:
             valid_combos.append(result)
@@ -67,21 +71,21 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
             
             total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
             total_aspd = base_aspd_2 + sum(t.get('ATK_SPD', 0) for t in combo)
+            total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
             
             result = {
                 'strategy': '5CA1C',
                 'combo': combo,
                 'total_cd': total_cd,
                 'total_aspd': total_aspd,
+                'total_crit': total_crit,
                 'missing': []
             }
             
-            if total_aspd < aspd_range[0]:
-                result['missing'].append(f'ASPD too low: {total_aspd:.1f}/{aspd_range[0]}')
-            elif total_aspd > aspd_range[1]:
-                result['missing'].append(f'ASPD too high: {total_aspd:.1f}/{aspd_range[1]}')
+            if abs(total_aspd - target_aspd) > aspd_tolerance:
+                result['missing'].append(f'ASPD not {target_aspd}: {total_aspd:.1f}')
             if abs(total_cd - target_cd) > cd_tolerance:
-                result['missing'].append(f'CD not 15.3: {total_cd:.1f}')
+                result['missing'].append(f'CD not {target_cd}: {total_cd:.1f}')
             
             if not result['missing']:
                 valid_combos.append(result)
@@ -99,39 +103,36 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
             
             total_cd = base_cd_3 + sum(t.get('Cooldown', 0) for t in combo)
             total_aspd = base_aspd_3 + sum(t.get('ATK_SPD', 0) for t in combo)
+            total_crit = base_crit_3 + sum(t.get('Crit', 0) for t in combo)
             
             result = {
                 'strategy': '3CA2C',
                 'combo': combo,
                 'total_cd': total_cd,
                 'total_aspd': total_aspd,
+                'total_crit': total_crit,
                 'missing': []
             }
             
-            if total_aspd < aspd_range[0]:
-                result['missing'].append(f'ASPD too low: {total_aspd:.1f}/{aspd_range[0]}')
-            elif total_aspd > aspd_range[1]:
-                result['missing'].append(f'ASPD too high: {total_aspd:.1f}/{aspd_range[1]}')
+            if abs(total_aspd - target_aspd) > aspd_tolerance:
+                result['missing'].append(f'ASPD not {target_aspd}: {total_aspd:.1f}')
             if abs(total_cd - target_cd) > cd_tolerance:
-                result['missing'].append(f'CD not 15.3: {total_cd:.1f}')
+                result['missing'].append(f'CD not {target_cd}: {total_cd:.1f}')
             
             if not result['missing']:
                 valid_combos.append(result)
             else:
                 close_combos.append(result)
-        
-        if combinations_checked % 1000 == 0:
-            print(f"Checked {combinations_checked} combinations...")
     
-    # Sort valid combinations by how close they are to target ASPD
-    valid_combos.sort(key=lambda x: abs((aspd_range[0] + aspd_range[1])/2 - x['total_aspd']))
+    # Sort valid combinations by highest crit
+    valid_combos.sort(key=lambda x: x['total_crit'], reverse=True)
     
     # Sort close combinations
     if not valid_combos and close_combos:
         close_combos.sort(key=lambda x: (
             len(x['missing']),
-            abs(target_cd - x['total_cd']),  # Prioritize CD target
-            abs((aspd_range[0] + aspd_range[1])/2 - x['total_aspd'])  # Then ASPD
+            abs(target_aspd - x['total_aspd']) + abs(target_cd - x['total_cd']),  # Combined distance from targets
+            -x['total_crit']  # Higher crit is better
         ))
     
     return valid_combos, close_combos, combinations_checked
@@ -172,7 +173,7 @@ def print_detailed_results(valid_combos, close_combos, combinations_checked, tim
     print(f"Valid combinations found: {len(valid_combos)}")
     
     if valid_combos:
-        print("\nTop 5 Valid Combinations (Sorted by CD, then Crit):")
+        print("\nTop 5 Valid Combinations (Sorted by Crit):")
         print("=" * 80)
         for i, result in enumerate(valid_combos[:5], 1):
             print_combo(i, result)
@@ -187,14 +188,15 @@ def print_combo(index, result):
     """Helper function to print a single combination."""
     combo = result['combo']
     print(f"\n{index}. {result['strategy']} Combination")
-    print(f"CD: {result['total_cd']:.1f}")  # CD first since it's primary requirement
     print(f"ASPD: {result['total_aspd']:.1f}")
+    print(f"CD: {result['total_cd']:.1f}")
+    print(f"Crit: {result['total_crit']:.1f}")
     print("-" * 50)
-    print(f"{'Type':<12}{'CD':<8}{'ASPD':<8}")
+    print(f"{'Type':<12}{'ASPD':<8}{'CD':<8}{'Crit':<8}")
     print("-" * 50)
     for topping in combo:
-        print(f"{topping['type']:<12}{topping.get('Cooldown', 0):<8.1f}"
-              f"{topping.get('ATK_SPD', 0):<8.1f}")
+        print(f"{topping['type']:<12}{topping.get('ATK_SPD', 0):<8.1f}"
+              f"{topping.get('Cooldown', 0):<8.1f}{topping.get('Crit', 0):<8.1f}")
 
 if __name__ == "__main__":
     # Your toppings list here
