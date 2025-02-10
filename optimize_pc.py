@@ -2,26 +2,15 @@ from itertools import combinations
 import time
 
 def find_all_valid_combos(chocolate_toppings, caramel_toppings):
-    """Find ALL valid combinations for three strategies."""
-    # Strategy 1: 5 Caramel
-    base_aspd_1 = 54.9
-    base_cd_1 = 0
-    base_crit_1 = 0
+    """Find ALL valid combinations for Pinecone."""
+    # Base stats
+    base_aspd = 44.4
+    base_cd = 9
     
-    # Strategy 2: 5 Caramel + 1 Chocolate
-    base_aspd_2 = 48.8
-    base_cd_2 = 3
-    base_crit_2 = 0
-    
-    # Strategy 3: 3 Caramel + 2 Chocolate
-    base_aspd_3 = 44.7
-    base_cd_3 = 6
-    base_crit_3 = 0
-    
-    target_aspd = 57.6
-    target_cd = 9.4
-    aspd_tolerance = 0.05  # Small tolerance for floating point comparison
-    cd_tolerance = 0.05    # Small tolerance for CD
+    # Requirements
+    aspd_range = (57.6, 57.7)  # Updated ASPD range
+    target_cd = 15.4
+    cd_tolerance = 0.05  # Small tolerance for CD
     
     valid_combos = []
     close_combos = []
@@ -31,79 +20,16 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
     print(f"Chocolate toppings: {len(chocolate_toppings)}")
     print(f"Caramel toppings: {len(caramel_toppings)}")
     
-    # Strategy 1: 5 Caramel
-    print("\nChecking Strategy: 5 Caramel")
-    for caramel_combo in combinations(enumerate(caramel_toppings), 5):
-        combinations_checked += 1
-        combo = [c[1] for c in caramel_combo]
-        
-        total_cd = base_cd_1 + sum(t.get('Cooldown', 0) for t in combo)
-        total_aspd = base_aspd_1 + sum(t.get('ATK_SPD', 0) for t in combo)
-        total_crit = base_crit_1 + sum(t.get('Crit', 0) for t in combo)
-        
-        result = {
-            'strategy': '5CA',
-            'combo': combo,
-            'total_cd': total_cd,
-            'total_aspd': total_aspd,
-            'total_crit': total_crit,
-            'missing': []
-        }
-        
-        if abs(total_aspd - target_aspd) > aspd_tolerance:
-            result['missing'].append(f'ASPD not {target_aspd}: {total_aspd:.1f}')
-        if abs(total_cd - target_cd) > cd_tolerance:
-            result['missing'].append(f'CD not {target_cd}: {total_cd:.1f}')
-        
-        if not result['missing']:
-            valid_combos.append(result)
-        else:
-            close_combos.append(result)
-    
-    # Strategy 2: 5 Caramel + 1 Chocolate
-    print("\nChecking Strategy: 5 Caramel + 1 Chocolate")
-    for caramel_combo in combinations(enumerate(caramel_toppings), 4):
-        caramel_toppings_list = [c[1] for c in caramel_combo]
-        
-        for choc_idx, choc in enumerate(chocolate_toppings):
-            combinations_checked += 1
-            combo = caramel_toppings_list + [choc]
-            
-            total_cd = base_cd_2 + sum(t.get('Cooldown', 0) for t in combo)
-            total_aspd = base_aspd_2 + sum(t.get('ATK_SPD', 0) for t in combo)
-            total_crit = base_crit_2 + sum(t.get('Crit', 0) for t in combo)
-            
-            result = {
-                'strategy': '5CA1C',
-                'combo': combo,
-                'total_cd': total_cd,
-                'total_aspd': total_aspd,
-                'total_crit': total_crit,
-                'missing': []
-            }
-            
-            if abs(total_aspd - target_aspd) > aspd_tolerance:
-                result['missing'].append(f'ASPD not {target_aspd}: {total_aspd:.1f}')
-            if abs(total_cd - target_cd) > cd_tolerance:
-                result['missing'].append(f'CD not {target_cd}: {total_cd:.1f}')
-            
-            if not result['missing']:
-                valid_combos.append(result)
-            else:
-                close_combos.append(result)
-    
-    # Strategy 3: 3 Caramel + 2 Chocolate
+    # Strategy: 3 Caramel + 2 Chocolate
     print("\nChecking Strategy: 3 Caramel + 2 Chocolate")
-    for caramel_combo in combinations(enumerate(caramel_toppings), 3):
-        caramel_toppings_list = [c[1] for c in caramel_combo]
-        
-        for choc_combo in combinations(enumerate(chocolate_toppings), 2):
+    for caramel_combo in combinations(caramel_toppings, 2):
+        for choc_combo in combinations(chocolate_toppings, 3):
             combinations_checked += 1
-            combo = caramel_toppings_list + [c[1] for c in choc_combo]
+            combo = list(caramel_combo) + list(choc_combo)
             
-            total_cd = base_cd_3 + sum(t.get('Cooldown', 0) for t in combo)
-            total_aspd = base_aspd_3 + sum(t.get('ATK_SPD', 0) for t in combo)
-            total_crit = base_crit_3 + sum(t.get('Crit', 0) for t in combo)
+            total_cd = base_cd + sum(t.get('Cooldown', 0) for t in combo)
+            total_aspd = base_aspd + sum(t.get('ATK_SPD', 0) for t in combo)
+            total_crit = sum(t.get('Crit', 0) for t in combo)
             
             result = {
                 'strategy': '3CA2C',
@@ -114,8 +40,11 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
                 'missing': []
             }
             
-            if abs(total_aspd - target_aspd) > aspd_tolerance:
-                result['missing'].append(f'ASPD not {target_aspd}: {total_aspd:.1f}')
+            # Check requirements
+            if total_aspd < aspd_range[0]:
+                result['missing'].append(f'ASPD too low: {total_aspd:.1f}/{aspd_range[0]}')
+            elif total_aspd > aspd_range[1]:
+                result['missing'].append(f'ASPD too high: {total_aspd:.1f}/{aspd_range[1]}')
             if abs(total_cd - target_cd) > cd_tolerance:
                 result['missing'].append(f'CD not {target_cd}: {total_cd:.1f}')
             
@@ -123,16 +52,22 @@ def find_all_valid_combos(chocolate_toppings, caramel_toppings):
                 valid_combos.append(result)
             else:
                 close_combos.append(result)
+            
+            if combinations_checked % 1000 == 0:
+                print(f"Checked {combinations_checked} combinations...")
     
-    # Sort valid combinations by highest crit
-    valid_combos.sort(key=lambda x: x['total_crit'], reverse=True)
+    # Sort valid combinations
+    valid_combos.sort(key=lambda x: (
+        -x['total_crit'],                                          # Higher Crit
+        abs((aspd_range[0] + aspd_range[1])/2 - x['total_aspd'])  # Closer to middle of ASPD range
+    ))
     
     # Sort close combinations
     if not valid_combos and close_combos:
         close_combos.sort(key=lambda x: (
-            len(x['missing']),
-            abs(target_aspd - x['total_aspd']) + abs(target_cd - x['total_cd']),  # Combined distance from targets
-            -x['total_crit']  # Higher crit is better
+            len(x['missing']),                                    # Fewer missing requirements
+            abs(target_cd - x['total_cd']),                      # Closer to target CD
+            abs((aspd_range[0] + aspd_range[1])/2 - x['total_aspd'])  # Closer to middle of ASPD range
         ))
     
     return valid_combos, close_combos, combinations_checked
@@ -295,7 +230,7 @@ if __name__ == "__main__":
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 1.6, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 1.3, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.3, 'Crit': 1.1, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
-        {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
+        # {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.4, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 1.2, 'Crit': 0.0, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 2.8, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
         {'type': 'chocolate', 'ATK': 0.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 1.7, 'DMG_Resist': 0.0},

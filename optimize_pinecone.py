@@ -4,8 +4,8 @@ import time
 def find_all_valid_combos(chocolate_toppings, caramel_toppings):
     """Find ALL valid combinations for Pinecone."""
     # Base stats
-    base_aspd = 46.3 - 3.4
-    base_cd = 3
+    base_aspd = 47.5
+    base_cd = 6
     
     # Requirements
     aspd_range = (57.6, 57.8)  # Very specific ASPD range
