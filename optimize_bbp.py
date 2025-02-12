@@ -1,5 +1,6 @@
 from itertools import combinations
 import time
+
 def preprocess_toppings(toppings, min_relevant_stats=2):
     """
     Filter toppings based on relevance to ATK, Crit, and ATK_SPD.
@@ -15,7 +16,7 @@ def preprocess_toppings(toppings, min_relevant_stats=2):
     
     for topping in toppings:
         # Count how many relevant stats this topping has
-        relevant_count = sum(1 for stat in relevant_stats if topping[stat] > 0)
+        relevant_count = sum(1 for stat in relevant_stats if topping.get(stat, 0) > 0)
         
         if relevant_count >= min_relevant_stats:
             filtered_toppings.append(topping)
@@ -24,13 +25,13 @@ def preprocess_toppings(toppings, min_relevant_stats=2):
     
     # Print summary by type
     rasp_kept = len([t for t in filtered_toppings if t['type'] == 'raspberry'])
-    apple_kept = len([t for t in filtered_toppings if t['type'] == 'apple_jelly'])
+    jelly_kept = len([t for t in filtered_toppings if t['type'] == 'apple_jelly'])
     rasp_total = len([t for t in toppings if t['type'] == 'raspberry'])
-    apple_total = len([t for t in toppings if t['type'] == 'apple_jelly'])
+    jelly_total = len([t for t in toppings if t['type'] == 'apple_jelly'])
     
     print(f"\nDiscarded {len(discarded_toppings)} toppings with fewer than {min_relevant_stats} relevant stats")
     print(f"Raspberry toppings kept: {rasp_kept}/{rasp_total}")
-    print(f"Apple Jelly toppings kept: {apple_kept}/{apple_total}")
+    print(f"Apple Jelly toppings kept: {jelly_kept}/{jelly_total}")
     print(f"Total toppings kept: {len(filtered_toppings)}/{len(toppings)}")
     
     return filtered_toppings
@@ -70,47 +71,48 @@ def test_preprocess():
     print("\nTest complete!")
     print("=" * 50)
 
-def find_all_valid_combos(raspberry_toppings, apple_jelly_toppings):
-    """Find ALL valid combinations and sort them by total ATK."""
+def find_all_valid_combos(raspberry_toppings, jelly_toppings):
+    """Find valid combinations for 3 Raspberry + 2 Jelly strategy."""
+    min_atk = 73
+    aspd_range = (9.9, 11.5)
+    
+    # Base stats
     base_atk = 60
     base_crit = 18
-    base_atk_spd = 0
-    crit_range = (30.5, 31)
-    atk_spd_range = (9.9, 10.5)
+    base_aspd = 0
     
     valid_combos = []
     combinations_checked = 0
     
     print(f"\nChecking all combinations of:")
     print(f"Raspberry toppings: {len(raspberry_toppings)}")
-    print(f"Apple Jelly toppings: {len(apple_jelly_toppings)}")
+    print(f"Apple Jelly toppings: {len(jelly_toppings)}")
     
-    # Try all possible combinations
+    print("\nChecking Strategy: 3 Raspberry + 2 Jelly")
     for rasp_combo in combinations(raspberry_toppings, 3):
-        for apple_combo in combinations(apple_jelly_toppings, 2):
+        for jelly_combo in combinations(jelly_toppings, 2):
             combinations_checked += 1
-            combo = list(rasp_combo) + list(apple_combo)
+            combo = list(rasp_combo) + list(jelly_combo)
             
-            # Calculate stats
-            total_atk = base_atk + sum(t['ATK'] for t in combo)
-            total_crit = base_crit + sum(t['Crit'] for t in combo)
-            total_atk_spd = base_atk_spd + sum(t['ATK_SPD'] for t in combo)
+            total_atk = base_atk + sum(t.get('ATK', 0) for t in combo)
+            total_aspd = base_aspd + sum(t.get('ATK_SPD', 0) for t in combo)
+            total_crit = base_crit + sum(t.get('Crit', 0) for t in combo)
             
-            # Store all valid combinations
-            if (crit_range[0] <= total_crit <= crit_range[1] and 
-                atk_spd_range[0] <= total_atk_spd <= atk_spd_range[1]):
+            if (total_atk >= min_atk and 
+                aspd_range[0] <= total_aspd <= aspd_range[1]):
                 valid_combos.append({
+                    'strategy': '3R2J',
                     'combo': combo,
                     'total_atk': total_atk,
-                    'total_crit': total_crit,
-                    'total_atk_spd': total_atk_spd
+                    'total_aspd': total_aspd,
+                    'total_crit': total_crit
                 })
             
             if combinations_checked % 1000 == 0:
                 print(f"Checked {combinations_checked} combinations...")
     
-    # Sort all valid combinations by ATK
-    valid_combos.sort(key=lambda x: x['total_atk'], reverse=True)
+    # Sort by ATK first, then Crit
+    valid_combos.sort(key=lambda x: (-x['total_atk'], -x['total_crit']))
     
     return valid_combos, combinations_checked
 
@@ -129,41 +131,16 @@ def print_detailed_results(valid_combos, combinations_checked, time_taken):
     
     for i, result in enumerate(valid_combos[:5], 1):
         combo = result['combo']
-        print(f"\n{i}. Combination (ATK: {result['total_atk']:.1f}, "
-              f"Crit: {result['total_crit']:.1f}, "
-              f"ATK_SPD: {result['total_atk_spd']:.1f}):")
-        print("-" * 50)
-        print(f"{'Type':<12}{'ATK':<8}{'Crit':<10}{'ATK_SPD':<10}")
-        print("-" * 50)
+        print(f"\n{i}. {result['strategy']} Combination (ATK: {result['total_atk']:.1f}, "
+              f"ASPD: {result['total_aspd']:.1f}, "
+              f"Crit: {result['total_crit']:.1f}):")
+        print("-" * 60)
+        print(f"{'Type':<12}{'ATK':<8}{'ASPD':<8}{'Crit':<8}")
+        print("-" * 60)
         for topping in combo:
-            print(f"{topping['type']:<12}{topping['ATK']:<8.1f}"
-                  f"{topping['Crit']:<10.1f}{topping['ATK_SPD']:<10.1f}")
-    
-    # Statistical analysis
-    if len(valid_combos) > 1:
-        print("\nStatistical Analysis:")
-        print("-" * 50)
-        atk_diff = valid_combos[0]['total_atk'] - valid_combos[1]['total_atk']
-        print(f"ATK difference between 1st and 2nd: +{atk_diff:.1f}")
-        print(f"ATK range in valid combos: {valid_combos[-1]['total_atk']:.1f} - {valid_combos[0]['total_atk']:.1f}")
-        
-        # Distribution of stats in valid combinations
-        print("\nStat Ranges in Valid Combinations:")
-        print("-" * 50)
-        crit_range = [combo['total_crit'] for combo in valid_combos]
-        atk_spd_range = [combo['total_atk_spd'] for combo in valid_combos]
-        print(f"Crit Range: {min(crit_range):.1f} - {max(crit_range):.1f}")
-        print(f"ATK_SPD Range: {min(atk_spd_range):.1f} - {max(atk_spd_range):.1f}")
-        
-        # Verification that first combo is optimal
-        print("\nVerification of Optimality:")
-        print("-" * 50)
-        best_combo = valid_combos[0]['combo']
-        print("Best combination is optimal because:")
-        print(f"1. All {combinations_checked} possible combinations were checked")
-        print(f"2. It has the highest ATK ({valid_combos[0]['total_atk']:.1f}) while meeting all constraints:")
-        print(f"   - Crit: {valid_combos[0]['total_crit']:.1f} (Required: 30.0-32.0)")
-        print(f"   - ATK_SPD: {valid_combos[0]['total_atk_spd']:.1f} (Required: 9.9-10.5)")
+            print(f"{topping['type']:<12}{topping.get('ATK', 0):<8.1f}"
+                  f"{topping.get('ATK_SPD', 0):<8.1f}"
+                  f"{topping.get('Crit', 0):<8.1f}")
 
 # Test the optimized search
 if __name__ == "__main__":
