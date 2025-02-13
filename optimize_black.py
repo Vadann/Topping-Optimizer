@@ -1,12 +1,12 @@
 from itertools import combinations
 import time
 
-def preprocess_toppings(toppings, min_relevant_stats=1):
+def preprocess_toppings(toppings, min_relevant_stats=2):
     """
-    Filter toppings based on relevance to ATK, ATK_SPD, and Cooldown.
+    Filter toppings based on relevance to Cooldown, ATK, and Crit.
     Only keep toppings that have at least min_relevant_stats of these stats.
     """
-    relevant_stats = ['ATK', 'ATK_SPD', 'Cooldown']
+    relevant_stats = ['Cooldown', 'ATK', 'Crit']
     filtered_toppings = []
     discarded_toppings = []
     
@@ -34,16 +34,20 @@ def preprocess_toppings(toppings, min_relevant_stats=1):
     return filtered_toppings
 
 def find_all_valid_combos(raspberry_toppings):
-    """Find ALL valid combinations and sort them by ATK_SPD first, then ATK."""
+    """Find valid combinations for 5 Raspberry strategy."""
     base_atk = 83
-    base_aspd = 30.6
-    cd_range = (7.7, 8.8)
+    min_cd = 9.0
+    min_atk = 93  # Minimum ATK requirement (base + toppings)
     
     valid_combos = []
     combinations_checked = 0
     
     print(f"\nChecking all combinations of:")
     print(f"Raspberry toppings: {len(raspberry_toppings)}")
+    print(f"Requirements:")
+    print(f"- Minimum CD: {min_cd}%")
+    print(f"- Minimum ATK: {min_atk} (Base: {base_atk})")
+    print(f"- Then maximize Crit")
     
     # Try all possible combinations of 5 raspberry toppings
     for rasp_combo in combinations(raspberry_toppings, 5):
@@ -51,24 +55,31 @@ def find_all_valid_combos(raspberry_toppings):
         combo = list(rasp_combo)
         
         # Calculate stats
-        total_atk = base_atk + sum(t.get('ATK', 0) for t in combo)
-        total_aspd = base_aspd + sum(t.get('ATK_SPD', 0) for t in combo)
         total_cd = sum(t.get('Cooldown', 0) for t in combo)
+        total_atk = base_atk + sum(t.get('ATK', 0) for t in combo)
         
-        # Store all valid combinations that meet CD requirement
-        if cd_range[0] <= total_cd <= cd_range[1]:
-            valid_combos.append({
-                'combo': combo,
-                'total_atk': total_atk,
-                'total_aspd': total_aspd,
-                'total_cd': total_cd
-            })
+        # Skip if minimum requirements not met
+        if total_cd < min_cd or total_atk < min_atk:
+            continue
+            
+        total_crit = sum(t.get('Crit', 0) for t in combo)
+        
+        valid_combos.append({
+            'strategy': '5RA',
+            'combo': combo,
+            'total_cd': total_cd,
+            'total_atk': total_atk,
+            'total_crit': total_crit
+        })
         
         if combinations_checked % 1000 == 0:
             print(f"Checked {combinations_checked} combinations...")
     
-    # Sort all valid combinations by ATK_SPD first, then by ATK
-    valid_combos.sort(key=lambda x: (x['total_aspd'], x['total_atk']), reverse=True)
+    # Sort by priority: Crit (after meeting ATK minimum)
+    valid_combos.sort(key=lambda x: (
+        round(x['total_crit'], 1),   # Highest Crit (primary)
+        round(x['total_atk'], 1)     # Then by ATK (secondary)
+    ), reverse=True)
     
     return valid_combos, combinations_checked
 
@@ -87,21 +98,22 @@ def print_detailed_results(valid_combos, combinations_checked, time_taken):
     
     for i, result in enumerate(valid_combos[:5], 1):
         combo = result['combo']
-        print(f"\n{i}. Combination (ATK: {result['total_atk']:.1f}, "
-              f"ASPD: {result['total_aspd']:.1f}, "
-              f"CD: {result['total_cd']:.1f}):")
-        print("-" * 50)
-        print(f"{'Type':<12}{'ATK':<8}{'ASPD':<8}{'CD':<8}")
-        print("-" * 50)
+        print(f"\n{i}. {result['strategy']} Combination")
+        print(f"ATK: {result['total_atk']:.1f}")
+        print(f"CD: {result['total_cd']:.1f}")
+        print(f"Crit: {result['total_crit']:.1f}")
+        print("-" * 60)
+        print(f"{'Type':<15}{'ATK':<8}{'CD':<8}{'Crit':<8}")
+        print("-" * 60)
         for topping in combo:
-            print(f"{topping['type']:<12}{topping.get('ATK', 0):<8.1f}"
-                  f"{topping.get('ATK_SPD', 0):<8.1f}{topping.get('Cooldown', 0):<8.1f}")
+            print(f"{topping['type']:<15}{topping.get('ATK', 0):<8.1f}"
+                  f"{topping.get('Cooldown', 0):<8.1f}"
+                  f"{topping.get('Crit', 0):<8.1f}")
 
 if __name__ == "__main__":
-    # Your actual toppings list
     toppings = [
         {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.4},
-    {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 0.0},   
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 3.0, 'Cooldown': 1.1, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.8, 'Crit': 2.6, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 1.9},
     {'type': 'raspberry', 'ATK': 2.5, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
@@ -233,9 +245,22 @@ if __name__ == "__main__":
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.7, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.0, 'DMG_Resist': 0.0},
     {'type': 'raspberry', 'ATK': 2.8, 'ATK_SPD': 2.5, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.6, 'DMG_Resist': 2.7},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.3, 'Crit': 1.8, 'Cooldown': 0.0, 'DMG_Resist': 3.7},
     {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.9, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.2, 'Crit': 2.9, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 1.8},
+    {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 0.0, 'Crit': 2.2, 'Cooldown': 1.8, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 1.5, 'ATK_SPD': 0.0, 'Crit': 2.4, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 0.0}, 
+    {'type': 'raspberry', 'ATK': 2.0, 'ATK_SPD': 2.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 0.0}, 
+    {'type': 'raspberry', 'ATK': 3.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.4, 'DMG_Resist': 5.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 1.7, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 6.0},
+    {'type': 'raspberry', 'ATK': 2.7, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 2.6},
+    {'type': 'raspberry', 'ATK': 2.8, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 1.9, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 2.2, 'Crit': 0.0, 'Cooldown': 2.0, 'DMG_Resist': 0.0},
+    {'type': 'raspberry', 'ATK': 0.0, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 2.0, 'DMG_Resist': 2.5},
     ]
-    
     start_time = time.time()
     filtered_toppings = preprocess_toppings(toppings)
     
@@ -245,6 +270,4 @@ if __name__ == "__main__":
     )
     
     end_time = time.time()
-    
-    # Print detailed results
     print_detailed_results(valid_combos, combinations_checked, end_time - start_time) 
