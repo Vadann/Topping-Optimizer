@@ -3,20 +3,85 @@ from tkinter import ttk, filedialog, messagebox
 from typing import Dict, List
 import json
 import re
+from ttkthemes import ThemedTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 class ToppingOptimizerGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Cookie Run: Kingdom Topping Optimizer")
-        self.toppings = []
+        self.root.geometry("900x1000")
+        
+        # Cookie Run color scheme
+        self.colors = {
+            'background': '#291711',     # Darker brown
+            'frame': '#3D2318',          # Medium brown
+            'text': '#FFE6D5',           # Warm white
+            'accent': '#FF9ECD',         # Soft pink
+            'button': '#8B4513',         # Button brown
+            'button_hover': '#A0522D'    # Lighter button brown
+        }
+        
+        # Configure root
+        self.root.configure(bg=self.colors['background'])
+        
+        # Configure styles
+        style = ttk.Style()
+        
+        # Frame styles
+        style.configure(
+            "Cookie.TFrame",
+            background=self.colors['background']
+        )
+        
+        style.configure(
+            "Inner.TFrame",
+            background=self.colors['frame']
+        )
+        
+        # Label styles
+        style.configure(
+            "Title.TLabel",
+            font=("Comic Sans MS", 24, "bold"),
+            foreground=self.colors['accent'],
+            background=self.colors['background']
+        )
+        
+        style.configure(
+            "Header.TLabel",
+            font=("Comic Sans MS", 14),
+            foreground=self.colors['text'],
+            background=self.colors['frame']
+        )
+        
+        # Main container with padding
+        main_frame = ttk.Frame(root, style="Cookie.TFrame", padding="20")
+        main_frame.pack(fill="both", expand=True)
+        
+        # Title
+        title_frame = ttk.Frame(main_frame, style="Cookie.TFrame")
+        title_frame.pack(pady=(0, 20))
+        
+        # Create a rounded rectangle background for the title
+        title_bg = self.create_rounded_rectangle(400, 80, self.colors['frame'])
+        title_bg_label = ttk.Label(title_frame, image=title_bg)
+        title_bg_label.image = title_bg
+        title_bg_label.pack(pady=10)
+        
+        title_label = ttk.Label(
+            title_frame,
+            text="Cookie Run: Kingdom\nTopping Optimizer",
+            style="Title.TLabel",
+            justify="center"
+        )
+        title_label.place(relx=0.5, rely=0.5, anchor="center")
         
         # Cookie selection
-        self.cookie_frame = ttk.LabelFrame(root, text="Cookie Selection")
-        self.cookie_frame.pack(padx=10, pady=5, fill="x")
+        cookie_frame = self.create_section_frame(main_frame, "Choose Your Cookie")
         
         self.cookie_var = tk.StringVar()
         self.cookie_dropdown = ttk.Combobox(
-            self.cookie_frame, 
+            cookie_frame,
             textvariable=self.cookie_var,
             values=[
                 "Black Sapphire",
@@ -30,54 +95,135 @@ class ToppingOptimizerGUI:
                 "Mint Choco",
                 "Mystic Flower",
                 "Palm Cookie"
-            ]
+            ],
+            state="readonly",
+            width=30
         )
-        self.cookie_dropdown.pack(padx=5, pady=5)
+        self.cookie_dropdown.pack(pady=10)
         
-        # Topping input
-        self.topping_frame = ttk.LabelFrame(root, text="Topping Management")
-        self.topping_frame.pack(padx=10, pady=5, fill="x")
+        # Topping management
+        topping_frame = self.create_section_frame(main_frame, "Topping Management")
         
-        # Buttons frame
-        button_frame = ttk.Frame(self.topping_frame)
-        button_frame.pack(fill="x", padx=5, pady=5)
+        # Button container
+        button_frame = ttk.Frame(topping_frame, style="Inner.TFrame")
+        button_frame.pack(fill="x", pady=10)
         
-        ttk.Button(
-            button_frame,
-            text="Import from File",
-            command=self.import_toppings
-        ).pack(side="left", padx=5)
+        buttons = [
+            ("🗂️ Import", self.import_toppings),
+            ("➕ Add", self.add_topping),
+            ("📝 Parse", self.parse_raw_toppings)
+        ]
         
-        ttk.Button(
-            button_frame,
-            text="Add Single Topping",
-            command=self.add_topping
-        ).pack(side="left", padx=5)
+        for text, command in buttons:
+            self.create_custom_button(button_frame, text, command)
         
-        ttk.Button(
-            button_frame,
-            text="Parse Pasted Data",
-            command=self.parse_raw_toppings
-        ).pack(side="left", padx=5)
+        # Text input
+        input_label = ttk.Label(
+            topping_frame,
+            text="Paste your toppings data here:",
+            style="Header.TLabel"
+        )
+        input_label.pack(anchor="w", pady=(10, 5))
         
-        # Raw text input
-        ttk.Label(self.topping_frame, text="Paste toppings data here:").pack(padx=5, pady=(10,0), anchor="w")
-        self.raw_text = tk.Text(self.topping_frame, height=10)
-        self.raw_text.pack(padx=5, pady=5, fill="both")
+        self.raw_text = tk.Text(
+            topping_frame,
+            height=10,
+            font=("Consolas", 11),
+            wrap="word",
+            bg=self.colors['background'],
+            fg=self.colors['text'],
+            insertbackground=self.colors['text']
+        )
+        self.raw_text.pack(fill="both", expand=True, pady=5)
         
         # Optimize button
-        ttk.Button(
-            root,
-            text="Find Best Combinations",
-            command=self.optimize
-        ).pack(padx=10, pady=10)
+        optimize_frame = ttk.Frame(main_frame, style="Cookie.TFrame")
+        optimize_frame.pack(pady=20)
+        self.create_custom_button(
+            optimize_frame,
+            "✨ Find Best Combinations ✨",
+            self.optimize,
+            large=True
+        )
         
-        # Results area
-        self.results_frame = ttk.LabelFrame(root, text="Results")
-        self.results_frame.pack(padx=10, pady=5, fill="both", expand=True)
+        # Results
+        results_frame = self.create_section_frame(main_frame, "Results")
         
-        self.results_text = tk.Text(self.results_frame, height=20)
-        self.results_text.pack(padx=5, pady=5, fill="both", expand=True)
+        self.results_text = tk.Text(
+            results_frame,
+            height=15,
+            font=("Consolas", 11),
+            wrap="word",
+            bg=self.colors['background'],
+            fg=self.colors['text'],
+            insertbackground=self.colors['text']
+        )
+        self.results_text.pack(fill="both", expand=True)
+        
+        scrollbar = ttk.Scrollbar(results_frame, orient="vertical", command=self.results_text.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.results_text.configure(yscrollcommand=scrollbar.set)
+
+    def create_rounded_rectangle(self, width, height, color):
+        """Create a rounded rectangle background"""
+        image = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle(
+            [(0, 0), (width-1, height-1)],
+            radius=20,
+            fill=color
+        )
+        return ImageTk.PhotoImage(image)
+
+    def create_section_frame(self, parent, title):
+        """Create a section frame with rounded corners and title"""
+        frame = ttk.Frame(parent, style="Inner.TFrame", padding=15)
+        frame.pack(fill="x", padx=5, pady=5)
+        
+        title_label = ttk.Label(
+            frame,
+            text=title,
+            style="Header.TLabel"
+        )
+        title_label.pack(anchor="w", pady=(0, 10))
+        
+        return frame
+
+    def create_custom_button(self, parent, text, command, large=False):
+        """Create a custom styled button"""
+        button_frame = ttk.Frame(parent, style="Inner.TFrame")
+        button_frame.pack(side="left", padx=5)
+        
+        width = 200 if large else 100
+        height = 40 if large else 30
+        
+        bg = self.create_rounded_rectangle(width, height, self.colors['button'])
+        hover_bg = self.create_rounded_rectangle(width, height, self.colors['button_hover'])
+        
+        button = tk.Label(
+            button_frame,
+            text=text,
+            font=("Comic Sans MS", 12 if large else 10),
+            fg=self.colors['text'],
+            image=bg,
+            compound="center"
+        )
+        button.image = bg
+        button.hover_image = hover_bg
+        button.pack()
+        
+        def on_enter(e):
+            button.configure(image=button.hover_image)
+            
+        def on_leave(e):
+            button.configure(image=button.image)
+            
+        def on_click(e):
+            command()
+        
+        button.bind("<Enter>", on_enter)
+        button.bind("<Leave>", on_leave)
+        button.bind("<Button-1>", on_click)
 
     def parse_raw_toppings(self):
         raw_data = self.raw_text.get("1.0", tk.END).strip()
@@ -229,7 +375,7 @@ class ToppingOptimizerGUI:
         self.results_text.insert("1.0", results)
 
 def main():
-    root = tk.Tk()
+    root = ThemedTk(theme="arc")
     app = ToppingOptimizerGUI(root)
     root.mainloop()
 
