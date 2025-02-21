@@ -19,12 +19,12 @@ Currently optimizes toppings for:
 - Rebel (3 AJ + 2 SC)
 - Twizzly (5 SC)
 - Pinecone (3 SC + 2 CA)
-- Choco (5 SA)
+- Dark Choco (5 SA)
 - Crème Brûlée (3 SR + 2 AJ)
-- Captain Apple (3 SR + 2 SA)
+- Candy Apple (3 SR + 2 SA)
 - Mint Choco (5 SC)
-- Mystic Guest (3 SR + 2 SA)
-- Paladin (5 SA)
+- Mystic Flower (3 SR + 2 SA)
+- Palm Cookie (5 SA)
 
 ## 🚀 Getting Started
 
