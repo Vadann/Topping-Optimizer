@@ -33,12 +33,8 @@ Currently optimizes toppings for:
 git clone https://github.com/your-repo/cookie-run-optimizer.git
 cd cookie-run-optimizer
 ```
-2️⃣ Install dependencies
-```bash
-pip install -r requirements.txt
-```
 
-3️⃣ Add Your Toppings (Toppings should be formatted in a Python dictionary list)
+2️⃣ Add Your Toppings (Toppings should be formatted in a Python dictionary list)
 ```python
 toppings = [
     {
@@ -53,7 +49,7 @@ toppings = [
 ]
 ```
 
-4️⃣ Run the Optimizer
+3️⃣ Run the Optimizer
 ```bash
 python -m optimizations.black # For Black Sapphire
 python -m optimizations.ferret # For Ferret
