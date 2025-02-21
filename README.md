@@ -30,7 +30,7 @@ Currently optimizes toppings for:
 
 1️⃣ Clone the repository
 ```bash
-git clone https://github.com/your-repo/cookie-run-optimizer.git
+git clone https://github.com/Vadann/Topping-Optimizer
 cd cookie-run-optimizer
 ```
 
@@ -45,6 +45,15 @@ toppings = [
         "Cooldown": 0.0,        # Cooldown substats
         "DMG_Resist": 0.0       # Damage Resist substats
     },
+
+    # Alternatively, you can enter your toppings likes:
+    
+    {'type': 'apple_jelly', 'ATK': 2.4, 'ATK_SPD': 0.0, 'Crit': 2.5, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 1.7, 'ATK_SPD': 0.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.5},
+    {'type': 'apple_jelly', 'ATK': 2.1, 'ATK_SPD': 2.9, 'Crit': 1.7, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 1.7, 'ATK_SPD': 2.5, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 0.0},
+    {'type': 'apple_jelly', 'ATK': 2.0, 'ATK_SPD': 3.0, 'Crit': 0.0, 'Cooldown': 0.0, 'DMG_Resist': 4.1},
+
     # Add more toppings...
 ]
 ```
@@ -154,9 +163,14 @@ apple_jelly    2.7     0.0     1.6
 Each cookie's requirements can be customized in their respective config files under `configs/`. You can modify:
 - Base stats
 - Required minimum/maximum stats
+> ⚠️ **IMPORTANT NOTE**: Base stats in configs must include ALL stats that come from sources other than toppings:
+> - Beascuit
+> - Topping Bonus Set Stats
+> This ensures the optimizer calculates total stats correctly!
 - Relevant stats to consider
 - Topping strategy
 - Minimum relevant substats per topping
+
 
 ## 📝 Contributing
 Feel free to contribute by:
