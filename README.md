@@ -31,7 +31,7 @@ Currently optimizes toppings for:
 1️⃣ Clone the repository
 ```bash
 git clone https://github.com/Vadann/Topping-Optimizer
-cd cookie-run-optimizer
+cd Topping-Optimizer
 ```
 
 2️⃣ Add Your Toppings (Toppings should be formatted in a Python dictionary list)
