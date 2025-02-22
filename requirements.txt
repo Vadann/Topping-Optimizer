@@ -1,0 +1,2 @@
+# GUI dependencies
+tk>=0.1.0                  # Only needed if tkinter not included in Python installation 
